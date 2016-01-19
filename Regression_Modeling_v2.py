@@ -1,5 +1,6 @@
 import pandas as pd
-from sklearn.cross_validation import train_test_split
+import numpy as np
+from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, BayesianRidge, SGDRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
@@ -62,9 +63,10 @@ scaler = MinMaxScaler(feature_range=(-1,1))
 #####Develop models with 10 Kfolds cross validation and 100 randomized grid searches
 #Set up cross validation parameters for many models
 scoring = 'mean_absolute_error'
-cv = 10
-n_iter = 100
+cv = 3
+n_iter = 90
 distribution = [10**i for i in range (-7,3)]
+distribution = [i2*i for i in distribution for i2 in range (1,10)]
 
 ######Develop Basic Linear Model
 lr = LinearRegression()
@@ -104,7 +106,7 @@ lasso = Pipeline([
 test_params = {'lasso__alpha':distribution}
 lasso_optimized = RandomizedSearchCV(estimator=lasso, param_distributions=test_params, scoring=scoring, cv=cv, n_iter=n_iter)
 lasso_optimized.fit(x_train, y_train)
-
+#Save the model
 joblib.dump(lasso_optimized, 'Lasso_Model.pkl', compress=1)
 
 ######Tuning Linear Ridge
@@ -124,10 +126,10 @@ bayesian_ridge = Pipeline([
                         ('scaler', scaler),
                         ('BayesianRidge', BayesianRidge())
                         ])
-test_params = {'BayesianRidge__alpha_1':[10**-5, 10**-4,0.001,0.01,0.1,1,10],
-'BayesianRidge__alpha_2':[10**-5, 10**-4,0.001,0.01,0.1,1,10],
-'BayesianRidge__lambda_1': [10**-5, 10**-4,0.001,0.01,0.1,1,10],
-'BayesianRidge__lambda_2': [10**-5, 10**-4,0.001,0.01,0.1,1,10] }
+test_params = {'BayesianRidge__alpha_1':distribution,
+'BayesianRidge__alpha_2':distribution,
+'BayesianRidge__lambda_1': distribution,
+'BayesianRidge__lambda_2': distribution }
 bayesian_ridge_optimized = RandomizedSearchCV(estimator = bayesian_ridge, param_distributions = test_params, scoring=scoring, cv=cv, n_iter=n_iter)
 bayesian_ridge_optimized.fit(x_train,y_train)
 #Save the model
@@ -140,9 +142,9 @@ sgd = Pipeline([
                 ('SGD', SGDRegressor())
                 ])
 #sgd.get_params().keys() to get the params
-test_params = {'SGD__alpha':[10**-5, 10**-4,0.001,0.01,0.1,1,10],
+test_params = {'SGD__alpha':distribution,
 'SGD__penalty': ['l2', 'l1', 'elasticnet'],
-'SGD__epsilon': [10**-5, 10**-4,0.001,0.01,0.1,1,10],
+'SGD__epsilon': distribution,
 'SGD__l1_ratio': [0.1, 0.2, 0.5, 0.6, 0.8, 0.9],
 'SGD__power_t': [0.1, 0.2, 0.25, 0.5, 0.8, 0.9]}
 sgd_optimized = RandomizedSearchCV(estimator = sgd, param_distributions = test_params, scoring=scoring, cv=cv, n_iter=n_iter)
@@ -156,8 +158,8 @@ random_forest = Pipeline([
                         ('scaler', scaler),
                         ('RandomForestRegressor', RandomForestRegressor())
                         ])
-test_params = {'RandomForestRegressor__n_estimators':[1,3,5,10,15,20],
-'RandomForestRegressor__max_depth': [1,2,3,4,5,6,8],
+test_params = {'RandomForestRegressor__n_estimators':[1,2,3,4,5,6,7,8,9,10,15,20],
+'RandomForestRegressor__max_depth': [1,2,3,4,5,6,7,8,9,10],
 'RandomForestRegressor__min_samples_split': [1,2,3],
 'RandomForestRegressor__min_samples_leaf': [1,2,3],
 'RandomForestRegressor__bootstrap': [True, False]}
@@ -166,82 +168,74 @@ random_forest_optimized.fit(x_train,y_train)
 #Save the model
 joblib.dump(random_forest_optimized, 'Random_Forest_Model.pkl', compress =1)
 
+
 ###########################################
+######Compare and evaluate all models above
+models = [lr, svr, kr_optimized, lasso_optimized, linear_ridge_optimized,
+          bayesian_ridge_optimized, sgd_optimized, random_forest_optimized]
+model_names = ['Linear Regression', 'SVR', 'Kernel Ridge Regression', 'Lasso Regression', 'Linear Ridge Regression',
+               'Bayesian Ridge Regression', 'Stochastic Gradient Descent Regression', 'Random Forest Regression' ]
+
+print "CROSS VALIDATION MEAN ABSOLUTE ERROR with 3 folds for:"
+model_scores = {'Model':[], 'Mean':[], 'Standard Deviation':[]}
+for model, model_name in zip(models, model_names):
+    scores = cross_val_score(estimator = model, X = x_train, y = y_train, cv = 3, scoring = scoring)
+    model_scores['Model'].append(model_name)
+    model_scores['Mean'].append(-np.mean(scores))
+    model_scores['Standard Deviation'].append(np.std(scores))
+    print "%s Model: mean = %.4f, std = %.4f" %(model_name, -np.mean(scores), np.std(scores))
+#save the cross valiation scores for later graphing
+model_scores = pd.DataFrame(model_scores)
+model_scores.to_csv('Model_Scores.csv')
+
+##########################################
 print '########## TESTING ERRORS ##########'
-y_predicted = lr.predict(x_test)
-y2 = svr.predict(x_test)
-y3 = kr_optimized.predict(x_test)
-y4 = lasso_optimized.predict(x_test)
-y5 = linear_ridge_optimized.predict(x_test)
-y6 = bayesian_ridge_optimized.predict(x_test)
-y7 = sgd_optimized.predict(x_test)
-y8 = random_forest_optimized.predict(x_test)
+print "MEAN ABSOLUTE ERROR:"
+for model, model_name in zip(models, model_names):
+    y_test_predicted = model.predict(x_test)
+    mae = mean_absolute_error(y_test, y_test_predicted)
+    print "%s Model = %.4f" %(model_name, mae)
 
-print "MAE for Linear Regression:", mean_absolute_error(y_test, y_predicted)
-print "MAE for SVR:", mean_absolute_error(y_test, y2)
-print "MAE for Kernel Ridge Regression:", mean_absolute_error(y_test, y3)
-print "MAE for Lasso Regression:", mean_absolute_error(y_test, y4)
-print "MAE for Linear Ridge Regression:", mean_absolute_error(y_test, y5)
-print "MAE for Bayesian Ridge Regression:", mean_absolute_error(y_test, y6)
-print "MAE for Stochastic Gradient Descent Regression:", mean_absolute_error(y_test, y7)
-print "MAE for Random Forest Regression:", mean_absolute_error(y_test, y8)
 print "--------------------------------"
-print "MSE for Linear Regression", mean_squared_error(y_test, y_predicted)
-print "MSE for SVR", mean_squared_error(y_test, y2)
-print "MSE for Kernel Ridge Regression", mean_squared_error(y_test, y3)
-print "MSE for Lasso Regression:", mean_squared_error(y_test, y4)
-print "MSE for Linear Ridge Regression:", mean_squared_error(y_test, y5)
-print "MSE for Bayesian Ridge Regression:", mean_squared_error(y_test, y6)
-print "MSE for Stochastic Gradient Descent Regression:", mean_squared_error(y_test, y7)
-print "MSE for Random Forest Regression:", mean_squared_error(y_test, y8)
+print '########## TESTING ERRORS ##########'
+print "MEAN SQUARED ERROR:"
+for model, model_name in zip(models, model_names):
+    y_test_predicted = model.predict(x_test)
+    mse = mean_squared_error(y_test, y_test_predicted)
+    print "%s Model = %.4f" %(model_name, mse)
+
 print "--------------------------------"
-print "R2 for Linear Regression", r2_score(y_test, y_predicted)
-print "R2 for SVR", r2_score(y_test, y2)
-print "R2 for Kernel Ridge Regression", r2_score(y_test, y3)
-print "R2 for Lasso Regression:", r2_score(y_test, y4)
-print "R2 for Linear Ridge Regression:", r2_score(y_test, y5)
-print "R2 for Bayesian Ridge Regression:", r2_score(y_test, y6)
-print "R2 for Stochastic Gradient Descent Regression:", r2_score(y_test, y7)
-print "R2 for Random Forest Regression:", r2_score(y_test, y8)
+print '########## TESTING ERRORS ##########'
+print "R2 ERROR:"
+for model, model_name in zip(models, model_names):
+    y_test_predicted = model.predict(x_test)
+    r2 = r2_score(y_test, y_test_predicted)
+    print "%s Model = %.4f" %(model_name, r2)
 
-############################################
-
+print "--------------------------------"
 print '########## TRAINING ERRORS ##########'
-y_predicted = lr.predict(x_train)
-y2 = svr.predict(x_train)
-y3 = kr_optimized.predict(x_train)
-y4 = lasso_optimized.predict(x_train)
-y5 = linear_ridge_optimized.predict(x_train)
-y6 = bayesian_ridge_optimized.predict(x_train)
-y7 = sgd_optimized.predict(x_train)
-y8 = random_forest_optimized.predict(x_train)
+print "MEAN ABSOLUTE ERROR:"
+for model, model_name in zip(models, model_names):
+    y_train_predicted = model.predict(x_train)
+    mae = mean_absolute_error(y_train, y_train_predicted)
+    print "%s Model = %.4f" %(model_name, mae)
 
-print "MAE for Linear Regression:", mean_absolute_error(y_train, y_predicted)
-print "MAE for SVR:", mean_absolute_error(y_train, y2)
-print "MAE for Kernel Ridge Regression:", mean_absolute_error(y_train, y3)
-print "MAE for Lasso Regression:", mean_absolute_error(y_train, y4)
-print "MAE for Linear Ridge Regression:", mean_absolute_error(y_train, y5)
-print "MAE for Bayesian Ridge Regression:", mean_absolute_error(y_train, y6)
-print "MAE for Stochastic Gradient Descent Regression:", mean_absolute_error(y_train, y7)
-print "MAE for Random Forest Regression:", mean_absolute_error(y_train, y8)
 print "--------------------------------"
-print "MSE for Linear Regression:", mean_squared_error(y_train, y_predicted)
-print "MSE for SVR:", mean_squared_error(y_train, y2)
-print "MSE for Kernel Ridge Regression:", mean_squared_error(y_train, y3)
-print "MSE for Lasso Regression:", mean_squared_error(y_train, y4)
-print "MSE for Linear Ridge Regression:", mean_squared_error(y_train, y5)
-print "MSE for Bayesian Ridge Regression:", mean_squared_error(y_train, y6)
-print "MSE for Stochastic Gradient Descent Regression:", mean_squared_error(y_train, y7)
-print "MSE for Random Forest Regression:", mean_squared_error(y_train, y8)
+print '########## TRAINING ERRORS ##########'
+print "MEAN SQUARED ERROR:"
+for model, model_name in zip(models, model_names):
+    y_train_predicted = model.predict(x_train)
+    mse = mean_squared_error(y_train, y_train_predicted)
+    print "%s Model = %.4f" %(model_name, mse)
+
 print "--------------------------------"
-print "R2 for Linear Regression:", r2_score(y_train, y_predicted)
-print "R2 for SVR:", r2_score(y_train, y2)
-print "R2 for Kernel Ridge Regression:", r2_score(y_train, y3)
-print "R2 for Lasso Regression:", r2_score(y_train, y4)
-print "R2 for Linear Ridge Regression:", r2_score(y_train, y5)
-print "R2 for Bayesian Ridge Regression:", r2_score(y_train, y6)
-print "R2 for Stochastic Gradient Descent Regression:", r2_score(y_train, y7)
-print "R2 for Random Forest Regression:", r2_score(y_train, y8)
-print "--------------------------------"
+print '########## TRAINING ERRORS ##########'
+print "R2 ERROR:"
+for model, model_name in zip(models, model_names):
+    y_train_predicted = model.predict(x_train)
+    r2 = r2_score(y_train, y_train_predicted)
+    print "%s Model = %.4f" %(model_name, r2)
+
 end_time = time.time()
-print "It takes %.2f minutes to train and cross validate with 10 Kfolds and 100 randomized grid searches for all 8 regression models" % ((end_time - start_time)/60)
+print "--------------------------------"
+print "It takes %.2f minutes to train and cross validate with %i Kfolds and %i randomized grid searches for all 8 regression models" % ((end_time - start_time)/60, cv, n_iter)
