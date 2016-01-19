@@ -1,0 +1,29 @@
+CROSS VALIDATION ERROR
+2.32900772201
+2.168205201
+2.20788617609
+2.16293792111
+2.04003768577
+2.21150860631
+2.30532707765
+2.19377335456
+2.08522823779
+2.33445150895
+--------------------------------
+CROSS VALIDATION MEAN ABSOLUTE ERROR with 10 folds for:
+Super Model: mean = 2.2038, std = 0.0933
+--------------------------------
+TESTING ERROR
+Mean absolute error: 2.0048
+Mean squared error: 10.5574
+R2 error: 0.9982
+--------------------------------
+TRAINING ERROR
+Mean absolute error: 0.9953
+Mean squared error: 5.2267
+R2 error: 0.9994
+--------------------------------
+FINAL TRAINING ERROR
+Mean absolute error: 0.8599
+Mean squared error: 2.9805
+R2 error: 0.9996

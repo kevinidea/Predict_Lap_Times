@@ -1,0 +1,79 @@
+CROSS VALIDATION MEAN ABSOLUTE ERROR with 3 folds for:
+Linear Regression Model: mean = 3.4440, std = 0.0804
+SVR Model: mean = 3.3342, std = 0.1894
+Kernel Ridge Regression Model: mean = 3.4419, std = 0.0848
+Lasso Regression Model: mean = 3.4432, std = 0.0735
+Linear Ridge Regression Model: mean = 3.4408, std = 0.0862
+Bayesian Ridge Regression Model: mean = 3.4413, std = 0.0839
+Stochastic Gradient Descent Regression Model: mean = 15.0128, std = 7.2520
+Random Forest Regression Model: mean = 12.7631, std = 0.4178
+
+########## TESTING ERRORS ##########
+MEAN ABSOLUTE ERROR:
+Linear Regression Model = 3.5777
+SVR Model = 3.3873
+Kernel Ridge Regression Model = 3.5615
+Lasso Regression Model = 3.5819
+Linear Ridge Regression Model = 3.5668
+Bayesian Ridge Regression Model = 3.5679
+Stochastic Gradient Descent Regression Model = 13.2084
+Random Forest Regression Model = 12.8863
+--------------------------------
+########## TESTING ERRORS ##########
+MEAN SQUARED ERROR:
+Linear Regression Model = 85.0677
+SVR Model = 99.3369
+Kernel Ridge Regression Model = 85.4659
+Lasso Regression Model = 85.7668
+Linear Ridge Regression Model = 85.3228
+Bayesian Ridge Regression Model = 85.2942
+Stochastic Gradient Descent Regression Model = 617.8660
+Random Forest Regression Model = 354.3529
+--------------------------------
+########## TESTING ERRORS ##########
+R2 ERROR:
+Linear Regression Model = 0.9870
+SVR Model = 0.9848
+Kernel Ridge Regression Model = 0.9870
+Lasso Regression Model = 0.9869
+Linear Ridge Regression Model = 0.9870
+Bayesian Ridge Regression Model = 0.9870
+Stochastic Gradient Descent Regression Model = 0.9057
+Random Forest Regression Model = 0.9459
+--------------------------------
+
+########## TRAINING ERRORS ##########
+MEAN ABSOLUTE ERROR:
+Linear Regression Model = 3.1822
+SVR Model = 3.0430
+Kernel Ridge Regression Model = 3.1779
+Lasso Regression Model = 3.1821
+Linear Ridge Regression Model = 3.1783
+Bayesian Ridge Regression Model = 3.1786
+Stochastic Gradient Descent Regression Model = 12.3271
+Random Forest Regression Model = 12.2981
+--------------------------------
+########## TRAINING ERRORS ##########
+MEAN SQUARED ERROR:
+Linear Regression Model = 38.4872
+SVR Model = 67.2011
+Kernel Ridge Regression Model = 38.5492
+Lasso Regression Model = 38.4879
+Linear Ridge Regression Model = 38.5152
+Bayesian Ridge Regression Model = 38.5098
+Stochastic Gradient Descent Regression Model = 383.8521
+Random Forest Regression Model = 357.8798
+--------------------------------
+########## TRAINING ERRORS ##########
+R2 ERROR:
+Linear Regression Model = 0.9952
+SVR Model = 0.9917
+Kernel Ridge Regression Model = 0.9952
+Lasso Regression Model = 0.9952
+Linear Ridge Regression Model = 0.9952
+Bayesian Ridge Regression Model = 0.9952
+Stochastic Gradient Descent Regression Model = 0.9524
+Random Forest Regression Model = 0.9556
+
+--------------------------------
+It takes 51.54 minutes to train and cross validate with 3 Kfolds and 90 randomized grid searches for all 8 regression models
